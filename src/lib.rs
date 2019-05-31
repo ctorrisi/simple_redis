@@ -1,11 +1,10 @@
 #![deny(
     absolute_paths_not_starting_with_crate,
     anonymous_parameters,
-    async_idents,
+    keyword_idents,
     const_err,
     dead_code,
     deprecated,
-    duplicate_associated_type_bindings,
     duplicate_macro_exports,
     ellipsis_inclusive_range_patterns,
     exceeding_bitshifts,
@@ -35,8 +34,6 @@
     patterns_in_fns_without_body,
     plugin_as_library,
     private_in_public,
-    private_no_mangle_fns,
-    private_no_mangle_statics,
     proc_macro_derive_resolution_fallback,
     pub_use_of_private_extern_crate,
     question_mark_macro_sep,
@@ -51,7 +48,7 @@
     unconditional_recursion,
     unions_with_drop_fields,
     unknown_crate_types,
-    unnameable_test_functions,
+    unnameable_test_items,
     unreachable_code,
     unreachable_patterns,
     unreachable_pub,
@@ -251,12 +248,9 @@
 #[path = "./lib_test.rs"]
 mod lib_test;
 
-extern crate redis;
-
 pub mod client;
 mod commands;
 mod connection;
-mod subscriber;
 pub mod types;
 
 /// Error Type

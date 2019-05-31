@@ -7,13 +7,11 @@
 #[path = "./client_test.rs"]
 mod client_test;
 
-use connection;
+use crate::connection;
 use redis;
 use std::str::FromStr;
-use subscriber;
-use types::{
-    ErrorInfo, RedisBoolResult, RedisEmptyResult, RedisError, RedisMessageResult, RedisResult,
-    RedisStringResult,
+use crate::types::{
+    ErrorInfo, RedisBoolResult, RedisEmptyResult, RedisError, RedisResult, RedisStringResult,
 };
 
 /// The redis client which enables to invoke redis operations.
@@ -22,8 +20,6 @@ pub struct Client {
     client: redis::Client,
     /// Holds the current redis connection
     connection: connection::Connection,
-    /// Internal subscriber
-    subscriber: subscriber::Subscriber,
 }
 
 fn run_command_on_connection<T: redis::FromRedisValue>(
@@ -76,10 +72,6 @@ impl Client {
             result = self.run_command_empty_response("QUIT", vec![]);
         } else {
             result = Ok(());
-        }
-
-        if result.is_ok() {
-            result = self.unsubscribe_all();
         }
 
         result
@@ -160,93 +152,6 @@ impl Client {
         self.run_command(command, args)
     }
 
-    /// Subscribes to the provided channel.<br>
-    /// Actual subscription only occurs at the first call to get_message.
-    ///
-    /// # Arguments
-    ///
-    /// * `channel` - The channel name, for example: `level_info`
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # let mut client = simple_redis::create("redis://127.0.0.1:6379/").unwrap();
-    /// client.subscribe("important_notifications");
-    /// ```
-    pub fn subscribe(self: &mut Client, channel: &str) -> RedisEmptyResult {
-        self.subscriber.subscribe(channel)
-    }
-
-    /// Subscribes to the provided channel pattern.<br>
-    /// Actual subscription only occurs at the first call to get_message.
-    ///
-    /// # Arguments
-    ///
-    /// * `channel` - The channel pattern, for example: `level_*`
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// # let mut client = simple_redis::create("redis://127.0.0.1:6379/").unwrap();
-    /// client.psubscribe("important_notifications*");
-    /// ```
-    pub fn psubscribe(self: &mut Client, channel: &str) -> RedisEmptyResult {
-        self.subscriber.psubscribe(channel)
-    }
-
-    /// Returns true if subscribed to the provided channel.
-    pub fn is_subscribed(self: &mut Client, channel: &str) -> bool {
-        self.subscriber.is_subscribed(channel)
-    }
-
-    /// Returns true if subscribed to the provided channel pattern.
-    pub fn is_psubscribed(self: &mut Client, channel: &str) -> bool {
-        self.subscriber.is_psubscribed(channel)
-    }
-
-    /// Unsubscribes from the provided channel.
-    pub fn unsubscribe(self: &mut Client, channel: &str) -> RedisEmptyResult {
-        self.subscriber.unsubscribe(channel)
-    }
-
-    /// Unsubscribes from the provided channel pattern.
-    pub fn punsubscribe(self: &mut Client, channel: &str) -> RedisEmptyResult {
-        self.subscriber.punsubscribe(channel)
-    }
-
-    /// Unsubscribes from all channels.
-    pub fn unsubscribe_all(self: &mut Client) -> RedisEmptyResult {
-        self.subscriber.unsubscribe_all()
-    }
-
-    /// Fetches the next message from any of the subscribed channels.<br>
-    /// This function will return a TimeoutError in case no message was read in the provided timeout value (defined in
-    /// millies).<br>
-    /// If the provided timeout value is 0, there will be no timeout and the call will block until a message is read or
-    /// a connection error happens.
-    ///
-    /// # Arguments
-    ///
-    /// * `timeout` - The timeout value in millies or 0 for no timeout
-    ///
-    /// # Example
-    ///
-    /// ```rust,no_run
-    /// # let mut client = simple_redis::create("redis://127.0.0.1:6379/").unwrap();
-    /// client.subscribe("important_notifications");
-    ///
-    /// // get next message (wait up to 5 seconds, 0 for no timeout)
-    /// match client.get_message(5000) {
-    ///     Ok(message) => {
-    ///         let payload : String = message.get_payload().unwrap();
-    ///         println!("Got message: {}", payload);
-    ///     },
-    ///     Err(error) => println!("Error while fetching message, should retry again, info: {}", error),
-    /// }
-    /// ```
-    pub fn get_message(self: &mut Client, timeout: u64) -> RedisMessageResult {
-        self.subscriber.get_message(&self.client, timeout)
-    }
 }
 
 /// Constructs a new redis client.<br>
@@ -271,12 +176,10 @@ pub fn create(connection_string: &str) -> Result<Client, RedisError> {
     match redis::Client::open(connection_string) {
         Ok(redis_client) => {
             let redis_connection = connection::create();
-            let redis_pubsub = subscriber::create();
 
             let client = Client {
                 client: redis_client,
                 connection: redis_connection,
-                subscriber: redis_pubsub,
             };
 
             Ok(client)

@@ -2,6 +2,7 @@
 name = "simple_redis"
 version = "0.3.44"
 authors = ["Sagie Gur-Ari <sagiegurari@gmail.com>"]
+edition = "2018"
 description = "Simple and resilient redis client."
 license = "Apache-2.0"
 documentation = "https://sagiegurari.github.io/simple_redis/api/simple_redis/index.html"
@@ -23,7 +24,7 @@ include = [
 ]
 
 [dependencies]
-redis = "^0.8.0"
+redis = "^0.10.0"
 
 [features]
 default = []

@@ -10,9 +10,9 @@ use client::Client;
 
 /// Encapsulates the metadata and connections related to the Sentinels
 pub struct Sentinel {
-    sentinel_addrs: Vec<String>,
-    master: String,
-    master_client: Option<Client>,
+    pub sentinel_addrs: Vec<String>,
+    pub master: String,
+    pub master_client: Option<Client>,
 }
 
 impl Sentinel {

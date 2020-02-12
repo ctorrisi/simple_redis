@@ -30,6 +30,18 @@ impl Sentinel {
         }
     }
 
+    fn is_connection_open(client: &mut Client) -> bool {
+        match client.run_command_empty_response("PING", vec![]) {
+            Ok(_) => {
+                return true
+            },
+            Err(e) => {
+                println!("Error! {:?}", e);
+            }
+        };
+        false
+    }
+
     /// Encapsulates the metadata and connections related to the Sentinels
     fn new_client(sentinel_addrs: Vec<String>, master: String) -> Option<Client> {
         for sentinel_addr in &sentinel_addrs {
@@ -48,13 +60,8 @@ impl Sentinel {
                     let mut client = client::create(current_master_socket.as_str());
                     match client  {
                         Ok(mut c) => {
-                            match c.run_command_empty_response("PING", vec![]) {
-                                Ok(_) => {
-                                    return Some(c)
-                                },
-                                Err(e) => {
-                                    println!("Error! {:?}", e);
-                                }
+                            if Sentinel::is_connection_open(&mut c) {
+                                return Some(c)
                             }
                         },
                         Err(e) => {

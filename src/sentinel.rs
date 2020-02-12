@@ -48,8 +48,13 @@ impl Sentinel {
                     let mut client = client::create(current_master_socket.as_str());
                     match client  {
                         Ok(mut c) => {
-                            if c.run_command::<()>("PING", vec![]).is_ok() {
-                                return Some(c)
+                            match c.run_command_empty_response("PING", vec![]) {
+                                Ok(_) => {
+                                    return Some(c)
+                                },
+                                Err(e) => {
+                                    println!("Error! {:?}", e);
+                                }
                             }
                         },
                         Err(e) => {

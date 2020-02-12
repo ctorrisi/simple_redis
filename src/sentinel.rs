@@ -45,10 +45,9 @@ impl Sentinel {
     {
         let mut sentinel_client = client::create(sentinel_addr).unwrap();
         let args = vec!["get-master-addr-by-name", master];
-        match sentinel_client.run_command_string_response("SENTINEL", args) {
-            Ok(response) => {
-                let full_addr: Vec<& str> = response.split_whitespace().collect();
-                let master_addr = format!("redis://{}:{}/", full_addr[0], full_addr[1]);
+        match sentinel_client.run_command::<Vec<String>>("SENTINEL", args) {
+            Ok(addr) => {
+                let master_addr = format!("redis://{}:{}/", addr[0], addr[1]);
                 println!("master addr!: {}", master_addr);
                 master_addr
             },

@@ -246,6 +246,7 @@
 mod lib_test;
 
 pub mod client;
+pub mod sentinel;
 mod commands;
 mod connection;
 pub mod types;

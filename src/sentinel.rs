@@ -78,13 +78,13 @@ impl Sentinel {
     }
 
     /// Retrieves the master client as reported by the Sentinel(s).
-    pub fn get_client(&mut self) -> Option<&Client>
+    pub fn get_client(&mut self) -> Option<&mut Client>
     {
         if !Sentinel::is_connection_open(&mut self.master_client) {
             return match Sentinel::new_client(self.sentinel_addrs.clone(), self.master.clone()) {
                 Some(client) => {
                     self.master_client = client;
-                    Some(&self.master_client)
+                    Some(&mut self.master_client)
                 },
                 None => {
                     println!("No client!");
@@ -92,6 +92,6 @@ impl Sentinel {
                 }
             };
         }
-        Some(&self.master_client)
+        Some(&mut self.master_client)
     }
 }

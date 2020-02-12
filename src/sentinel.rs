@@ -45,7 +45,7 @@ impl Sentinel {
                     let addr: Vec<String> = addr;
                     let current_master_socket = format!("redis://{}:{}/", &addr[0], &addr[1]);
                     println!("Current master socket: {}", current_master_socket.as_str());
-                    let mut client = client::create(current_master_socket.as_str());
+                    let mut client = client::create("redis://127.0.0.1:6379/");
                     match client  {
                         Ok(mut c) => {
                             match c.run_command_empty_response("PING", vec![]) {

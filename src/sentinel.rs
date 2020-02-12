@@ -43,7 +43,7 @@ impl Sentinel {
             match current_master_info {
                 Ok(addr) => {
                     let addr: Vec<String> = addr;
-                    let current_master_socket = format!("{}:{}", &addr[0], &addr[1]);
+                    let current_master_socket = format!("redis://{}:{}/", &addr[0], &addr[1]);
                     println!("Current master socket: {}", current_master_socket.as_str());
                     let mut client = client::create(current_master_socket.as_str());
                     match client  {

@@ -48,7 +48,7 @@ impl Sentinel {
                     let mut client = client::create(current_master_socket.as_str());
                     match client  {
                         Ok(mut c) => {
-                            if c.is_connection_open() {
+                            if c.run_command::<()>("PING", vec![]).is_ok() {
                                 return Some(c)
                             }
                         },

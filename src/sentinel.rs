@@ -12,15 +12,15 @@ use client::Client;
 pub struct Sentinel {
     sentinel_addrs: Vec<String>,
     master: String,
-    client: Client,
+    master_client: Option<Client>,
 }
 
 impl Sentinel {
 
     /// Retrieves the master client as reported by the Sentinel(s).
-    pub fn get_client(&mut self) -> Result<&Client, RedisError>
+    pub fn get_client(&mut self) -> Result<&Option<Client>, RedisError>
     {
-        if !self.client.is_connection_open() {
+        if !self.master_client.is_connection_open() {
             for sentinel_addr in &self.sentinel_addrs {
                 let sentinel_client = redis::Client::open(sentinel_addr.as_str()).unwrap();
                 let mut con = sentinel_client.get_connection().unwrap();
@@ -48,12 +48,12 @@ impl Sentinel {
                 };
 
                 if client.is_some() {
-                    self.client = client.unwrap();
+                    self.master_client = Some(client.unwrap());
                     break;
                 }
             }
         }
 
-        Ok(&self.client)
+        Ok(&self.master_client)
     }
 }

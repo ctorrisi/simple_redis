@@ -102,16 +102,16 @@ impl Sentinel {
     fn create_new_client(master_addr: &String) -> Option<Client>
     {
         if !master_addr.is_empty() {
-//            let mut client = client::create(master_addr.as_str());
-            let mut client = client::create("redis://127.0.0.1:6379/");
+            let mut client = client::create(master_addr.as_str());
             match client  {
                 Ok(mut c) => {
                     if Sentinel::is_connection_open(&mut c) {
+                        println!("Connected to new redis master {:?}", master_addr.as_str());
                         return Some(c)
                     }
                 },
                 Err(e) => {
-                    println!("Error: {:?}", e);
+                    println!("Failed to connect to master {:?}: {:?}", master_addr.as_str(), e);
                 }
             }
         };

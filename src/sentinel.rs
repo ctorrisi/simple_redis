@@ -104,8 +104,7 @@ impl Sentinel {
     fn create_new_client(master_addr: &String) -> Option<Client>
     {
         if !master_addr.is_empty() {
-//            let mut client = client::create(master_addr.as_str());
-            let mut client = client::create("redis://127.0.0.1:6379/");
+            let mut client = client::create(master_addr.as_str());
             match client  {
                 Ok(mut c) => {
                     if Sentinel::is_connection_open(&mut c) {
@@ -128,7 +127,9 @@ impl Sentinel {
             let master_addr = Sentinel::get_master_addr(&self.sentinel_addrs, self.master_name.as_str());
             return match Sentinel::create_new_client(&master_addr) {
                 Some(c) => {
+                    let mut master_addr_mut = self.master_addr.lock().unwrap();
                     *client = c;
+                    *master_addr_mut = master_addr;
                     Some(self.master_client.clone())
                 },
                 None => {

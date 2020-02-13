@@ -104,7 +104,8 @@ impl Sentinel {
     fn create_new_client(master_addr: &String) -> Option<Client>
     {
         if !master_addr.is_empty() {
-            let mut client = client::create(master_addr.as_str());
+//            let mut client = client::create(master_addr.as_str());
+            let mut client = client::create("redis://127.0.0.1:6379/");
             match client  {
                 Ok(mut c) => {
                     if Sentinel::is_connection_open(&mut c) {

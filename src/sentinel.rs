@@ -60,8 +60,6 @@ impl Sentinel {
                                 println!("Failed to update client to address {}", addr.as_str());
                             }
                         }
-                    } else {
-                        println!("No change addr: {}", addr.as_str());
                     }
                 }
                 thread::sleep(Duration::from_secs(30));

@@ -3,7 +3,7 @@
 //! Implements the redis client capabilities.
 //!
 
-use redis::{Client, RedisResult};
+use redis::{Client, Connection, RedisResult};
 use crate::types::{ErrorInfo, RedisError};
 
 /// The redis client which enables to invoke redis operations.
@@ -14,7 +14,7 @@ pub struct Clients {
 
 impl Clients {
     /// Returns an active client
-    pub fn get_client(&mut self) -> Result<&Client, RedisError> {
+    pub fn get_conn(&mut self) -> Result<Connection, RedisError> {
         let num_clients = self.clients.len();
         let mut idx = self.next_idx;
         let mut is_connection_open = false;
@@ -42,8 +42,9 @@ impl Clients {
 
         match is_connection_open {
             true => {
+                println!("Got redis connection at idx: {:?}", idx);
                 self.next_idx = self.next_idx + 1 % num_clients;
-                Ok(&self.clients[idx])
+                Ok(self.clients[idx].get_connection().unwrap())
             },
             false => Err(RedisError { info: ErrorInfo::Description("Unable to connect to a client.") })
         }

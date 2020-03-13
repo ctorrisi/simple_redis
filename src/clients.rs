@@ -38,14 +38,14 @@ impl Clients {
                 Err(e) => println!("Redis connection error! {:?}", e)
             }
             if !is_connection_open {
-                idx = idx + 1 % num_clients;
+                idx = (idx + 1) % num_clients;
             }
         }
 
         match is_connection_open {
             true => {
                 println!("Got redis connection at idx: {:?}", idx);
-                self.next_idx = self.next_idx + 1 % num_clients;
+                self.next_idx = (self.next_idx + 1) % num_clients;
                 Ok(self.clients[idx].get_connection().unwrap())
             },
             false => Err(RedisError { info: ErrorInfo::Description("Unable to connect to a client.") })

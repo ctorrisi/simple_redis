@@ -44,7 +44,6 @@ impl Clients {
 
         match is_connection_open {
             true => {
-                println!("Got redis connection at idx: {:?}", idx);
                 self.next_idx = (self.next_idx + 1) % num_clients;
                 Ok(self.clients[idx].get_connection().unwrap())
             },

@@ -14,7 +14,7 @@ pub struct Clients {
 
 impl Clients {
     /// Returns an active client
-    pub fn get_conn(&mut self) -> Result<Connection, RedisError> {
+    pub fn get_connection(&mut self) -> Result<Connection, RedisError> {
         let num_clients = self.clients.len();
         let mut idx = self.next_idx;
         let mut is_connection_open = false;

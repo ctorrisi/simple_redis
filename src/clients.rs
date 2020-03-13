@@ -37,7 +37,9 @@ impl Clients {
                 },
                 Err(e) => println!("Redis connection error! {:?}", e)
             }
-            idx = idx + 1 % num_clients;
+            if !is_connection_open {
+                idx = idx + 1 % num_clients;
+            }
         }
 
         match is_connection_open {

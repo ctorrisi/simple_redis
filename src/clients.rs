@@ -17,37 +17,35 @@ impl Clients {
     pub fn get_connection(&mut self) -> Result<Connection, RedisError> {
         let num_clients = self.clients.len();
         let mut idx = self.next_idx;
-        let mut is_connection_open = false;
-        let mut attempt = 0;
+        let mut connection = None;
+        let mut attempts = 0;
 
-        while !is_connection_open
+        while connection.is_none() && attempts < num_clients
         {
-            attempt = attempt + 1;
-            if attempt > num_clients {
-                break;
-            }
             let c = &self.clients[idx];
             match c.get_connection() {
-                Ok(mut con) => {
-                    let res: RedisResult<()> = redis::cmd("PING").query(&mut con);
-                    match res {
-                        Ok(_) => is_connection_open = true,
-                        Err(e) => println!("Redis connection error! {:?}", e)
-                    }
+                Ok(mut conn) => {
+                    let res: RedisResult<()> = redis::cmd("PING").query(&mut conn);
+                    connection = match res {
+                        Ok(_) => Some(conn),
+                        Err(e) => {
+                            println!("Redis connection error! {:?}", e);
+                            None
+                       }
+                    };
                 },
                 Err(e) => println!("Redis connection error! {:?}", e)
             }
-            if !is_connection_open {
-                idx = (idx + 1) % num_clients;
+            if connection.is_some() {
+                break;
             }
+            attempts = attempts + 1;
+            idx = (idx + 1) % num_clients;
         }
 
-        match is_connection_open {
-            true => {
-                self.next_idx = (self.next_idx + 1) % num_clients;
-                Ok(self.clients[idx].get_connection().unwrap())
-            },
-            false => Err(RedisError { info: ErrorInfo::Description("Unable to connect to a client.") })
+        match connection {
+            Some(conn) => Ok(conn),
+            None => Err(RedisError { info: ErrorInfo::Description("Unable to connect to a client.") })
         }
     }
 }

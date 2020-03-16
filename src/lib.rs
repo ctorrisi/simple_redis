@@ -1,4 +1,5 @@
 #![deny(
+    allow_deprecated,
     absolute_paths_not_starting_with_crate,
     anonymous_parameters,
     keyword_idents,
@@ -75,6 +76,7 @@
 )]
 #![warn(unknown_lints)]
 #![allow(
+    deprecated,
     bare_trait_objects,
     box_pointers,
     elided_lifetimes_in_paths,

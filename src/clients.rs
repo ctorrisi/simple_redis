@@ -1,6 +1,6 @@
-//! # client
+//! # clients
 //!
-//! Implements the redis client capabilities.
+//! A wrapper for redis client, allowing connections to multiple clients.
 //!
 
 use redis::{Client, Connection, RedisResult};

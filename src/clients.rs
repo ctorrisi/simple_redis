@@ -3,50 +3,91 @@
 //! A wrapper for redis client, allowing connections to multiple clients.
 //!
 
-use redis::{Client, Connection, RedisResult};
+use std::time::Instant;
+use redis::{Client, Connection, RedisResult, Commands};
 use crate::types::{ErrorInfo, RedisError};
 
 /// The redis client which enables to invoke redis operations.
 pub struct Clients {
     clients: Vec<Client>,
-    next_idx: usize
+    connection: Option<Connection>
 }
 
 impl Clients {
-    /// Returns an active client
-    pub fn get_connection(&mut self) -> Result<Connection, RedisError> {
-        let num_clients = self.clients.len();
-        let mut idx = self.next_idx;
-        let mut connection = None;
-        let mut attempts = 0;
+    fn check_connection(&mut self) {
+        if self.connection.is_none() {
+            self.reconnect();
+        };
+    }
 
-        while connection.is_none() && attempts < num_clients
-        {
-            let c = &self.clients[idx];
+    /// Invokes the SET command to redis
+    pub fn set(&mut self, k: &str, v: &str) -> Result<(), RedisError> {
+        self.check_connection();
+        if let Some(mut conn) = self.connection.as_mut() {
+            match conn.set(k, v) {
+                Ok(()) => return Ok(()),
+                Err(e) => {
+                    println!("Redis error on SET command: {:?}", e);
+                    self.reconnect();
+                    if let Some(mut c) = self.connection.as_mut() {
+                        match c.set(k, v) {
+                            Ok(()) => return Ok(()),
+                            Err(e) => println!("Redis error on SET command: {:?}", e)
+                        }
+                    }
+                }
+            }
+        }
+        Err(RedisError { info: ErrorInfo::Description("Unable to connect to a client.") })
+    }
+
+    /// Invokes the DEL command to redis
+    pub fn del(&mut self, k: &str) -> Result<(), RedisError> {
+        self.check_connection();
+        if let Some(mut conn) = self.connection.as_mut() {
+            match conn.del(k) {
+                Ok(()) => return Ok(()),
+                Err(e) => {
+                    println!("Redis error on DEL command: {:?}", e);
+                    self.reconnect();
+                    if let Some(mut c) = self.connection.as_mut() {
+                        match c.del(k) {
+                            Ok(()) => return Ok(()),
+                            Err(e) => println!("Redis error on DEL command: {:?}", e)
+                        }
+                    }
+                }
+            }
+        }
+        Err(RedisError { info: ErrorInfo::Description("Unable to connect to a client.") })
+    }
+
+    fn reconnect(&mut self) {
+        let mut lowest_latency = std::u128::MAX;
+        let mut connection = None;
+        for c in &self.clients {
             match c.get_connection() {
                 Ok(mut conn) => {
+                    let start = Instant::now();
                     let res: RedisResult<()> = redis::cmd("PING").query(&mut conn);
-                    connection = match res {
-                        Ok(_) => Some(conn),
+                    match res {
+                        Ok(_) => {
+                            let latency = start.elapsed().as_nanos();
+                            if latency < lowest_latency {
+                                lowest_latency = latency;
+                                connection = Some(conn);
+                                println!("Selected client: {:?}", c);
+                            }
+                        },
                         Err(e) => {
                             println!("Redis connection error! {:?}", e);
-                            None
-                       }
+                        }
                     };
                 },
                 Err(e) => println!("Redis connection error! {:?}", e)
             }
-            if connection.is_some() {
-                break;
-            }
-            attempts = attempts + 1;
-            idx = (idx + 1) % num_clients;
         }
-
-        match connection {
-            Some(conn) => Ok(conn),
-            None => Err(RedisError { info: ErrorInfo::Description("Unable to connect to a client.") })
-        }
+        self.connection = connection;
     }
 }
 
@@ -80,6 +121,6 @@ pub fn create(nodes: Vec<&str>) -> Result<Clients, RedisError> {
     if clients.len() < nodes_len {
         Err(RedisError { info: ErrorInfo::Description("Unable to connect to all clients.") })
     } else {
-        Ok(Clients { clients, next_idx: 0 })
+        Ok(Clients { clients, connection: None })
     }
 }

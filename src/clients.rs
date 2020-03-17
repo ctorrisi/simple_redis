@@ -83,6 +83,26 @@ impl Clients {
         Err(RedisError { info: ErrorInfo::Description("Unable to connect to a client.") })
     }
 
+    /// Invokes the PUBLISH command to redis
+    pub fn publish(&mut self, k: &str, v: &str) -> Result<(), RedisError> {
+        self.check_connection();
+        if let Some(mut conn) = self.connection.as_mut() {
+            match conn.publish(k, v) {
+                Ok(()) => return Ok(()),
+                Err(e) => {
+                    println!("Redis error on DEL command: {:?}", e);
+                    self.reconnect();
+                    if let Some(mut c) = self.connection.as_mut() {
+                        match c.publish(k, v) {
+                            Ok(()) => return Ok(()),
+                            Err(e) => println!("Redis error on DEL command: {:?}", e)
+                        }
+                    }
+                }
+            }
+        }
+        Err(RedisError { info: ErrorInfo::Description("Unable to connect to a client.") })
+    }
 
     fn reconnect(&mut self) {
         let mut lowest_latency = std::u128::MAX;

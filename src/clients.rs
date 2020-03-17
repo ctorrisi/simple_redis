@@ -4,7 +4,7 @@
 //!
 
 use std::time::Instant;
-use redis::{Client, Connection, RedisResult, Commands};
+use redis::{cmd, Client, Connection, RedisResult, Commands};
 use crate::types::{ErrorInfo, RedisError};
 
 /// The redis client which enables to invoke redis operations.
@@ -42,16 +42,16 @@ impl Clients {
     }
 
     /// Invokes the DEL command to redis
-    pub fn del(&mut self, k: &str) -> Result<(), RedisError> {
+    pub fn del(&mut self, arg: &[String]) -> Result<(), RedisError> {
         self.check_connection();
         if let Some(mut conn) = self.connection.as_mut() {
-            match conn.del(k) {
+            match cmd("DEL").arg(arg).query(conn) {
                 Ok(()) => return Ok(()),
                 Err(e) => {
                     println!("Redis error on DEL command: {:?}", e);
                     self.reconnect();
                     if let Some(mut c) = self.connection.as_mut() {
-                        match c.del(k) {
+                        match cmd("DEL").arg(arg).query(c) {
                             Ok(()) => return Ok(()),
                             Err(e) => println!("Redis error on DEL command: {:?}", e)
                         }
@@ -69,7 +69,7 @@ impl Clients {
             match c.get_connection() {
                 Ok(mut conn) => {
                     let start = Instant::now();
-                    let res: RedisResult<()> = redis::cmd("PING").query(&mut conn);
+                    let res: RedisResult<()> = cmd("PING").query(&mut conn);
                     match res {
                         Ok(_) => {
                             let latency = start.elapsed().as_nanos();
